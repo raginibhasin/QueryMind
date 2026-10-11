@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QueryMind Dashboard</title>
+  <style>
+    :root {
+      --bg: #0c1117;
+      --bg-soft: #111a24;
+      --panel: #141d2a;
+      --panel-strong: #1a2635;
+      --panel-alt: #192534;
+      --border: rgba(148, 163, 184, 0.2);
+      --text: #ebf2ff;
+      --text-soft: #aab8d1;
+      --text-faint: #7d8ca7;
+      --primary: #e0a458;
+      --primary-strong: #c9883b;
+      --secondary: #52b4a6;
+      --green: #3cc98d;
+      --red: #e66b5b;
+      --shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: linear-gradient(135deg, var(--bg) 0%, var(--bg-soft) 100%);
+      color: var(--text);
+      font-family: "Segoe UI", Inter, system-ui, sans-serif;
+    }
+    body { min-height: 100vh; }
+    button, input, select { font: inherit; }
+
+    .app-shell {
+      display: block;
+      min-height: calc(100vh - 72px);
+    }
+
+    .app-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      padding: 10px 4vw;
+      background: rgba(12, 17, 23, 0.96);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+    }
+    .app-topbar .brand { margin: 0; padding: 0; flex-shrink: 0; }
+    .app-nav { display: flex; align-items: center; gap: 6px; flex: 1; }
+    .nav-item {
+      border: 1px solid transparent;
+      border-radius: 9px;
+      padding: 9px 12px;
+      background: transparent;
+      color: var(--text-soft);
+      cursor: pointer;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+    .nav-item:hover, .nav-item.active {
+      color: var(--text);
+      background: rgba(82, 180, 166, 0.11);
+      border-color: rgba(82, 180, 166, 0.25);
+    }
+    .topbar-status { display: flex; align-items: center; gap: 8px; color: var(--text-soft); font-size: 0.75rem; white-space: nowrap; }
+    .app-view { display: none; width: min(1480px, 100%); margin: 0 auto; padding: 30px 4vw 56px; }
+    .app-view.active { display: block; animation: view-enter 260ms ease both; }
+    @keyframes view-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .welcome-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+      gap: clamp(28px, 6vw, 88px);
+      align-items: center;
+      min-height: 400px;
+      padding: 28px 0 40px;
+    }
+    .welcome-kicker { color: var(--secondary); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+    .welcome-copy h1 { max-width: 680px; margin: 14px 0; font-size: 3.4rem; line-height: 1.04; }
+    .welcome-copy p { max-width: 580px; color: var(--text-soft); font-size: 1.02rem; line-height: 1.75; }
+    .welcome-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .welcome-actions .btn { width: auto; }
+    .welcome-art {
+      min-height: 300px;
+      padding: 24px;
+      display: grid;
+      align-content: center;
+      gap: 12px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: repeating-linear-gradient(135deg, rgba(82,180,166,.045) 0 1px, transparent 1px 18px), linear-gradient(145deg, #1b2a37, #101820 78%);
+      box-shadow: var(--shadow);
+    }
+    .art-table { overflow: hidden; border: 1px solid rgba(148,163,184,.22); border-radius: 10px; background: rgba(10,16,22,.8); }
+    .art-table-title { padding: 9px 12px; color: var(--secondary); border-bottom: 1px solid var(--border); font: 700 .72rem Consolas, monospace; }
+    .art-row { display: grid; grid-template-columns: 1fr .8fr .5fr; gap: 10px; padding: 8px 12px; border-bottom: 1px solid rgba(148,163,184,.1); color: var(--text-soft); font: .68rem Consolas, monospace; }
+    .art-row:last-child { border-bottom: 0; }
+    .welcome-section-title, .page-heading h1 { margin: 0; font-size: 1.2rem; }
+    .welcome-section-title { margin-bottom: 14px; }
+    .page-heading { display: flex; justify-content: space-between; gap: 20px; align-items: center; margin-bottom: 22px; }
+    .page-heading p { margin: 7px 0 0; color: var(--text-soft); font-size: .86rem; }
+    .dataset-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .dataset-card { min-width: 0; padding: 18px; border: 1px solid var(--border); border-radius: 14px; background: rgba(20,29,42,.92); box-shadow: var(--shadow); }
+    .dataset-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .dataset-card h3 { margin: 0; font-size: 1rem; }
+    .dataset-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; color: #101820; background: var(--secondary); font-weight: 800; }
+    .dataset-card p { min-height: 42px; color: var(--text-soft); font-size: .8rem; line-height: 1.55; }
+    .dataset-meta { color: var(--text-faint); font-size: .7rem; line-height: 1.7; }
+    .dataset-card .btn { margin-top: 14px; }
+    .connection-list { display: grid; gap: 8px; }
+    .connection-entry { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: rgba(20,29,42,.72); }
+    .connection-entry small { display: block; margin-top: 4px; color: var(--text-faint); }
+    .studio-heading { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin: 0 0 14px; }
+    .studio-heading h1 { margin: 0; font-size: 1.35rem; }
+    .studio-tools { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .8fr); gap: 12px; }
+    .connector-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: start; }
+    .connector-form input, .connector-form select { width: 100%; min-width: 0; margin: 0; }
+    .connector-form #dbName { grid-column: span 2; }
+    .connector-form .btn { width: 100%; min-width: 0; white-space: nowrap; }
+    .upload-box { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .upload-box label { display: block; color: var(--text-soft); font-size: .76rem; font-weight: 700; margin-bottom: 8px; }
+    .upload-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+    .upload-controls input { min-width: 0; width: 100%; color: var(--text-soft); font-size: .72rem; }
+    .upload-controls input::file-selector-button { max-width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel-strong); color: var(--text); cursor: pointer; }
+    .upload-controls .btn { width: auto; }
+    .upload-status { min-height: 1.2em; margin: 8px 0 0; color: var(--text-faint); font-size: .7rem; }
+    .upload-status.error { color: #f7b2a7; }
+    .schema-panel { min-width: 0; }
+    .schema-list { display: flex; max-height: 150px; overflow: auto; }
+    .schema-item { min-width: 150px; }
+    .analytics-grid { padding: 0; margin: 12px 0 0; }
+    .prompt-row { padding: 16px 0 0; }
+    .transcript { min-height: 250px; max-height: min(54vh, 620px); padding: 18px 0 10px; }
+    .composer { margin-top: 8px; padding: 14px 0 4px; background: transparent; }
+    .library-grid { display: grid; grid-template-columns: minmax(250px, .7fr) minmax(0, 1.3fr); gap: 16px; align-items: start; }
+    .library-grid .panel { margin-bottom: 0; }
+    .library-grid .history-list { max-height: 65vh; }
+    .library-grid .saved-list { max-height: 65vh; overflow: auto; }
+
+    .sidebar, .right-rail {
+      background: rgba(17, 25, 35, 0.85);
+      border-right: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      padding: 24px 18px;
+    }
+    .right-rail {
+      border-right: none;
+      border-left: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      padding: 6px 8px;
+    }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary) 0%, #f4d5a0 100%);
+      display: grid;
+      place-items: center;
+      color: #1e1208;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+    }
+    .brand-text {
+      font-size: 1.08rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .brand-sub {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--text-soft);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .panel {
+      background: rgba(25, 38, 53, 0.92);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+    .section-label {
+      color: var(--text-soft);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin: 0 0 12px;
+      font-weight: 700;
+    }
+
+    .conn-form input, .conn-form select {
+      width: 100%;
+      margin-bottom: 10px;
+      background: rgba(14, 22, 30, 0.9);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+    .conn-form input:focus, .conn-form select:focus {
+      border-color: rgba(224, 164, 88, 0.8);
+      transform: translateY(-1px);
+    }
+
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 11px 14px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
+      color: #1b1209;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.03); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-soft);
+      width: auto;
+      padding-inline: 14px;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      margin-top: 10px;
+    }
+    .status-dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 10px rgba(230, 107, 91, 0.7);
+    }
+    .status-dot.on {
+      background: var(--green);
+      box-shadow: 0 0 10px rgba(60, 201, 141, 0.8);
+    }
+
+    .schema-list {
+      display: grid;
+      gap: 12px;
+      max-height: 540px;
+      overflow: auto;
+    }
+    .schema-item {
+      background: rgba(11, 18, 25, 0.5);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .schema-name {
+      font-weight: 700;
+      color: var(--secondary);
+      margin-bottom: 8px;
+      font-size: 0.78rem;
+    }
+    .schema-col {
+      color: var(--text-soft);
+      font-size: 0.74rem;
+      padding-left: 10px;
+      line-height: 1.6;
+    }
+    .schema-col .pk {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: rgba(11, 17, 23, 0.45);
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 22px 26px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(18, 25, 35, 0.4);
+    }
+    .topbar h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .summary-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .summary-card {
+      min-width: 120px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(21, 31, 42, 0.9);
+    }
+    .summary-card span {
+      display: block;
+      color: var(--text-faint);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .summary-card strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 1.1rem;
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(180px, 1fr);
+      gap: 12px;
+      padding: 16px 26px 0;
+    }
+    .analytics-panel {
+      min-width: 0;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(21, 31, 42, 0.72);
+    }
+    .analytics-title {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .activity-chart, .mix-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      height: 104px;
+      margin-top: 12px;
+    }
+    .activity-column, .mix-row { min-width: 0; flex: 1; text-align: center; }
+    .activity-value { color: var(--text-faint); font-size: 0.65rem; }
+    .activity-bar {
+      width: min(100%, 28px);
+      min-height: 3px;
+      margin: 5px auto;
+      border-radius: 5px 5px 2px 2px;
+      background: linear-gradient(180deg, var(--secondary), #258c8e);
+      transition: height 0.3s ease;
+    }
+    .activity-day { color: var(--text-faint); font-size: 0.63rem; }
+    .mix-chart { display: grid; align-content: center; gap: 9px; height: 104px; }
+    .mix-row { display: grid; grid-template-columns: 48px 1fr 22px; gap: 8px; align-items: center; text-align: left; }
+    .mix-label, .mix-count { color: var(--text-soft); font-size: 0.68rem; }
+    .mix-track { height: 7px; overflow: hidden; border-radius: 8px; background: rgba(125, 140, 167, 0.18); }
+    .mix-fill { height: 100%; border-radius: inherit; background: var(--primary); }
+
+    .prompt-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 18px 26px 0;
+    }
+    .chip {
+      background: rgba(18, 31, 44, 0.9);
+      border: 1px solid var(--border);
+      color: var(--text-soft);
+      border-radius: 999px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.82rem;
+    }
+    .chip:hover {
+      border-color: rgba(82, 180, 166, 0.7);
+      color: var(--text);
+    }
+
+    .transcript {
+      flex: 1;
+      overflow-y: auto;
+      padding: 22px 26px 10px;
+    }
+    .empty-state {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: rgba(15, 24, 34, 0.5);
+      color: var(--text-soft);
+      padding: 28px 20px;
+      text-align: center;
+      line-height: 1.8;
+      margin-top: 44px;
+    }
+    .empty-state code {
+      font-family: "Consolas", monospace;
+      background: rgba(25, 38, 53, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px 7px;
+      color: var(--primary);
+    }
+
+    .turn {
+      max-width: 980px;
+      margin: 0 auto 26px;
+    }
+    .turn .q {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+    .turn .q::before {
+      content: "›";
+      color: var(--primary);
+      margin-right: 8px;
+    }
+
+    .card {
+      background: rgba(20, 29, 42, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+    }
+    .card h4 {
+      margin: 0 0 10px;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--text-faint);
+      font-weight: 800;
+    }
+
+    .sql-block {
+      background: rgba(12, 17, 23, 0.8);
+      border: 1px solid rgba(82, 180, 166, 0.2);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.78rem;
+      color: var(--secondary);
+      font-family: Consolas, monospace;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      line-height: 1.6;
+    }
+    .explanation {
+      margin-top: 12px;
+      color: var(--text-soft);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .meta-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      color: var(--text-faint);
+      font-size: 0.75rem;
+      margin-top: 12px;
+    }
+
+    .result-wrap { min-height: 120px; }
+    .metric-value {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.04em;
+    }
+    .metric-label {
+      color: var(--text-soft);
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .result-table th, .result-table td {
+      text-align: left;
+      padding: 9px 10px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    }
+    .result-table th {
+      color: var(--text-faint);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+    .result-table td {
+      color: var(--text);
+      font-family: Consolas, monospace;
+    }
+    .table-wrap {
+      max-height: 260px;
+      overflow: auto;
+    }
+
+    .rejected { border-left: 4px solid var(--red); }
+    .reason {
+      color: #f7b2a7;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .composer {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 16px 26px 22px;
+      border-top: 1px solid var(--border);
+      background: rgba(18, 25, 35, 0.5);
+    }
+    .composer input {
+      flex: 1;
+      padding: 13px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(17, 27, 35, 0.85);
+      color: var(--text);
+      outline: none;
+    }
+    .composer input:focus { border-color: rgba(224, 164, 88, 0.8); }
+
+    .right-rail .panel { padding: 16px; }
+    .history-list {
+      display: grid;
+      gap: 10px;
+      max-height: 280px;
+      overflow: auto;
+    }
+    .history-item {
+      border: 1px solid var(--border);
+      background: rgba(11, 18, 25, 0.5);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--text-soft);
+      font-size: 0.76rem;
+      line-height: 1.55;
+    }
+    .history-item strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 4px;
+    }
+    .history-tools { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 10px; }
+    .history-tools input, .history-tools select {
+      min-width: 0;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      background: rgba(14, 22, 30, 0.9);
+    }
+    .history-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .small-action {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 8px;
+      background: transparent;
+      color: var(--text-soft);
+      cursor: pointer;
+      font-size: 0.68rem;
+    }
+    .small-action:hover { border-color: var(--secondary); color: var(--text); }
+    .query-sql { margin-top: 8px; font: 0.68rem/1.5 Consolas, monospace; color: var(--secondary); overflow-wrap: anywhere; }
+    .saved-list { display: grid; gap: 8px; }
+    .saved-item { display: flex; gap: 6px; align-items: center; }
+    .saved-item button:first-child {
+      min-width: 0;
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: rgba(11, 18, 25, 0.5);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+      overflow-wrap: anywhere;
+    }
+
+    dialog {
+      width: min(420px, calc(100% - 32px));
+      padding: 20px;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel-strong);
+      box-shadow: var(--shadow);
+    }
+    dialog::backdrop { background: rgba(3, 8, 13, 0.72); }
+    dialog h2 { margin: 0 0 14px; font-size: 1rem; }
+    dialog input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+    .dialog-actions .btn { width: auto; }
+
+    .mini-bars {
+      display: flex;
+      gap: 6px;
+      align-items: flex-end;
+      height: 120px;
+      margin-top: 12px;
+    }
+    .mini-bar {
+      flex: 1;
+      border-radius: 12px 12px 0 0;
+      background: linear-gradient(180deg, var(--secondary) 0%, #248d9b 100%);
+      min-height: 18px;
+      box-shadow: inset 0 -10px 18px rgba(0,0,0,0.12);
+    }
+
+    @media (max-width: 1100px) {
+      .studio-tools { grid-template-columns: 1fr; }
+      .connector-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .dataset-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 600px) {
+      .app-topbar { flex-wrap: wrap; gap: 10px; padding: 10px 16px; }
+      .app-nav { order: 3; flex-basis: 100%; overflow-x: auto; gap: 2px; }
+      .nav-item { padding: 8px; font-size: 0.72rem; }
+      .topbar-status { margin-left: auto; }
+      .app-view { padding: 22px 16px 38px; }
+      .welcome-hero { grid-template-columns: 1fr; min-height: auto; }
+      .welcome-copy h1 { font-size: 2.25rem; }
+      .welcome-art { min-height: 230px; }
+      .page-heading { align-items: flex-start; flex-direction: column; }
+      .dataset-grid, .library-grid { grid-template-columns: 1fr; }
+      .connector-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .connector-form #dbName { grid-column: span 2; }
+      .connector-form .btn { width: 100%; }
+      .upload-controls { grid-template-columns: 1fr; }
+      .upload-controls .btn { width: 100%; }
+      .studio-heading { align-items: flex-start; flex-direction: column; }
+      .summary-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+      .analytics-grid { grid-template-columns: 1fr; }
+      .composer { flex-wrap: wrap; }
+      .composer input { flex-basis: 100%; }
+      .composer .btn { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-topbar">
+    <div class="brand">
+      <div class="brand-mark">Q</div>
+      <div><div class="brand-text">QueryMind</div><span class="brand-sub">Data Studio</span></div>
+    </div>
+    <nav class="app-nav" aria-label="Main navigation">
+      <button class="nav-item active" data-view="welcome">Welcome</button>
+      <button class="nav-item" data-view="studio">Studio</button>
+      <button class="nav-item" data-view="catalog">Databases</button>
+      <button class="nav-item" data-view="library">History</button>
+    </nav>
+    <div class="topbar-status"><span class="status-dot" id="connDot"></span><span id="connLabel">No database connected</span></div>
+  </header>
+
+  <div class="app-shell">
+    <section class="app-view active" id="welcomeView">
+      <div class="welcome-hero">
+        <div class="welcome-copy">
+          <div class="welcome-kicker">Natural language analytics</div>
+          <h1>Meet your data where it is.</h1>
+          <p>Explore sample business, campus, and retail data, or connect a database of your own. QueryMind turns questions into validated SQL and clear results.</p>
+          <div class="welcome-actions">
+            <button class="btn" data-open-view="catalog">Explore databases</button>
+            <button class="btn secondary" data-open-view="studio">Open Query Studio</button>
+          </div>
+        </div>
+        <div class="welcome-art" aria-label="Preview of a data query and results">
+          <div class="art-table">
+            <div class="art-table-title">students · program outcomes</div>
+            <div class="art-row"><span>Computer Science</span><span>average_gpa</span><b>3.42</b></div>
+            <div class="art-row"><span>Data Science</span><span>average_gpa</span><b>3.58</b></div>
+            <div class="art-row"><span>Public Health</span><span>average_gpa</span><b>3.37</b></div>
+          </div>
+          <div class="art-table">
+            <div class="art-table-title">validated SELECT · 3 rows</div>
+            <div class="art-row"><span>read-only</span><span>0.014 sec</span><b>ready</b></div>
+          </div>
+        </div>
+      </div>
+      <h2 class="welcome-section-title">Start with a sample database</h2>
+      <div id="welcomeCatalog" class="dataset-grid"></div>
+    </section>
+
+    <section class="app-view" id="catalogView">
+      <div class="page-heading">
+        <div><h1>Database Library</h1><p>Browse the bundled sample datasets or reopen a database you connected before.</p></div>
+        <button class="btn secondary" data-open-view="studio">Connect a custom database</button>
+      </div>
+      <div id="catalogGrid" class="dataset-grid"></div>
+      <h2 class="welcome-section-title" style="margin-top:30px;">Previously connected</h2>
+      <div id="existingConnections" class="connection-list"></div>
+    </section>
+
+    <section class="app-view" id="studioView">
+      <div class="studio-heading">
+        <div><h1>Query Studio</h1><span id="activeDatabase" class="status-row">Choose a sample or connect a database to begin.</span></div>
+        <button class="btn secondary" id="disconnectBtn" type="button" hidden>Disconnect</button>
+      </div>
+      <div class="studio-tools">
+        <div class="panel">
+          <h3 class="section-label">Connect database</h3>
+          <div class="conn-form connector-form">
+            <select id="dbType"><option value="sqlite">SQLite</option><option value="postgresql">PostgreSQL</option></select>
+            <input id="dbName" value="sample_data/sample_company.db" placeholder="Database path or name" />
+            <input id="dbHost" placeholder="Host (Postgres)" />
+            <input id="dbUser" placeholder="Username" />
+            <input id="dbPass" type="password" placeholder="Password" />
+            <button class="btn" id="connectBtn">Connect</button>
+          </div>
+          <div class="upload-box">
+            <label for="sqliteFile">Or browse for a SQLite database</label>
+            <div class="upload-controls">
+              <input id="sqliteFile" type="file" accept=".db,.sqlite,.sqlite3,application/vnd.sqlite3,application/x-sqlite3" />
+              <button class="btn secondary" id="uploadConnectBtn" type="button">Upload &amp; connect</button>
+            </div>
+            <p id="uploadStatus" class="upload-status" role="status">SQLite files up to 50 MB are stored with this QueryMind project.</p>
+          </div>
+        </div>
+        <div class="panel schema-panel">
+          <h3 class="section-label">Database schema</h3>
+          <div id="schemaPanel" class="schema-list"><div style="color:var(--text-soft);font-size:.8rem">Connect a database to inspect its tables.</div></div>
+        </div>
+      </div>
+      <header class="topbar">
+        <h1>Workspace analytics</h1>
+        <div id="statsBar" class="summary-cards"></div>
+      </header>
+      <section class="analytics-grid" aria-label="Query analytics">
+        <div class="analytics-panel"><h2 class="analytics-title">Query activity · last 7 days</h2><div id="activityChart" class="activity-chart"></div></div>
+        <div class="analytics-panel"><h2 class="analytics-title">Result visualizations</h2><div id="chartBreakdown" class="mix-chart"></div></div>
+      </section>
+      <div class="prompt-row" id="promptRow"></div>
+      <div id="transcript" class="transcript"><div id="emptyState" class="empty-state">Connect a database, then ask a question. Results include safe SQL, an explanation, execution details, and a suitable visualization.</div></div>
+      <div class="composer">
+        <input id="questionInput" placeholder="Ask a question about your data…" disabled />
+        <button class="btn secondary" id="newConvBtn">New chat</button>
+        <button class="btn" id="askBtn" disabled>Ask</button>
+      </div>
+    </section>
+
+    <section class="app-view" id="libraryView">
+      <div class="page-heading"><div><h1>Saved queries &amp; history</h1><p>Reuse questions, inspect generated SQL, and export filtered history.</p></div></div>
+      <div class="library-grid">
+        <div class="panel">
+          <h3 class="section-label">Saved queries</h3>
+          <div id="savedList" class="saved-list"><div style="color:var(--text-soft);font-size:.8rem">Connect a database to load saved queries.</div></div>
+        </div>
+        <div class="panel">
+          <h3 class="section-label">SQL history</h3>
+          <div class="history-tools">
+            <input id="historySearch" type="search" placeholder="Search question or SQL" aria-label="Search query history" />
+            <select id="historyStatus" aria-label="Filter history status"><option value="">All</option><option value="success">Success</option><option value="rejected">Blocked</option><option value="error">Error</option></select>
+          </div>
+          <button class="small-action" id="exportHistoryBtn" style="width:100%;margin-bottom:10px;">Export filtered CSV</button>
+          <div id="historyCount" style="color:var(--text-faint);font-size:.68rem;margin-bottom:8px;"></div>
+          <div id="historyList" class="history-list"><div style="color:var(--text-soft);font-size:.8rem">Connect a database to view query history.</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <dialog id="saveDialog">
+    <form id="saveForm">
+      <h2>Save this query</h2>
+      <input id="savedName" maxlength="120" placeholder="Name this saved query" required />
+      <div class="dialog-actions">
+        <button type="button" class="btn secondary" id="cancelSaveBtn">Cancel</button>
+        <button type="submit" class="btn">Save query</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const API = "";
+    let connectionId = null;
+    let conversationId = null;
+    const state = { historyRows: [], saveDraft: null, searchTimer: null, samples: [], savedQueries: [] };
+
+    const $ = (id) => document.getElementById(id);
+
+    function applyDbMode() {
+      const dbType = $("dbType").value;
+      const isSqlite = dbType === "sqlite";
+      ["dbHost", "dbUser", "dbPass"].forEach((id) => {
+        const field = $(id);
+        field.disabled = isSqlite;
+        field.style.opacity = isSqlite ? "0.5" : "1";
+        if (isSqlite) field.value = "";
+      });
+      if (isSqlite && !$("dbName").value.trim()) {
+        $("dbName").value = "sample_data/sample_company.db";
+      }
+    }
+
+    $("dbType").addEventListener("change", applyDbMode);
+    document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => openView(button.dataset.view)));
+    document.querySelectorAll("[data-open-view]").forEach((button) => button.addEventListener("click", () => openView(button.dataset.openView)));
+    $("promptRow").addEventListener("click", (event) => {
+      const chip = event.target.closest("[data-question]");
+      if (!chip || $("questionInput").disabled) return;
+      $("questionInput").value = chip.dataset.question;
+      $("askBtn").click();
+    });
+    $("welcomeCatalog").addEventListener("click", handleSampleSelection);
+    $("catalogGrid").addEventListener("click", handleSampleSelection);
+    $("existingConnections").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-reconnect-id]");
+      if (button) reconnectDatabase(button.dataset.reconnectId);
+    });
+
+    $("connectBtn").addEventListener("click", () => connect());
+    $("uploadConnectBtn").addEventListener("click", uploadAndConnect);
+    $("disconnectBtn").addEventListener("click", disconnectDatabase);
+    $("askBtn").addEventListener("click", ask);
+    $("historySearch").addEventListener("input", () => {
+      clearTimeout(state.searchTimer);
+      state.searchTimer = setTimeout(loadHistory, 250);
+    });
+    $("historyStatus").addEventListener("change", loadHistory);
+    $("exportHistoryBtn").addEventListener("click", exportHistory);
+    $("savedList").addEventListener("click", (event) => {
+      const action = event.target.closest("[data-saved-action]");
+      if (!action) return;
+      const item = state.savedQueries?.find((saved) => saved.saved_query_id === action.dataset.id);
+      if (!item) return;
+      if (action.dataset.savedAction === "run") {
+        openView("studio");
+        conversationId = null;
+        ask(item.question);
+      } else if (action.dataset.savedAction === "delete") {
+        deleteSavedQuery(item.saved_query_id);
+      }
+    });
+    $("historyList").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-history-action]");
+      if (!button) return;
+      const item = state.historyRows[Number(button.dataset.index)];
+      if (item && button.dataset.historyAction === "ask") {
+        openView("studio");
+        $("questionInput").value = item.natural_language_query;
+        $("questionInput").focus();
+      }
+    });
+    $("cancelSaveBtn").addEventListener("click", () => $("saveDialog").close());
+    $("saveForm").addEventListener("submit", saveQuery);
+    $("questionInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") ask();
+    });
+    $("newConvBtn").addEventListener("click", () => {
+      conversationId = null;
+      $("transcript").innerHTML = '<div class="empty-state">New conversation started. Ask a question below.</div>';
+    });
+
+    applyDbMode();
+
+    function openView(name) {
+      document.querySelectorAll(".app-view").forEach((view) => view.classList.toggle("active", view.id === `${name}View`));
+      document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.view === name));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (name === "catalog") loadCatalog();
+      if (name === "library" && connectionId) {
+        loadHistory();
+        loadSavedQueries();
+      }
+      if (name === "studio" && connectionId) loadStats();
+    }
+
+    async function loadCatalog() {
+      const res = await fetch(`${API}/api/db/catalog`);
+      if (!res.ok) return;
+      const data = await res.json();
+      state.samples = data.samples || [];
+      renderSampleCards($("catalogGrid"), state.samples);
+      renderSampleCards($("welcomeCatalog"), state.samples.slice(0, 3));
+      const connections = data.connections || [];
+      $("existingConnections").innerHTML = connections.length ? connections.map((item) => `
+        <div class="connection-entry">
+          <div><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.database_type)} · ${escapeHtml(item.database_name)}</small></div>
+          <button class="small-action" data-reconnect-id="${escapeHtml(item.connection_id)}">Reconnect</button>
+        </div>
+      `).join("") : '<div style="color:var(--text-soft);font-size:.82rem">No previous connections yet.</div>';
+    }
+
+    function renderSampleCards(container, samples) {
+      container.innerHTML = samples.map((sample) => `
+        <article class="dataset-card">
+          <div class="dataset-card-head"><h3>${escapeHtml(sample.name)}</h3><span class="dataset-mark">${escapeHtml(sample.name.slice(0, 1))}</span></div>
+          <p>${escapeHtml(sample.description)}</p>
+          <div class="dataset-meta">${sample.tables.length} tables · ${sample.tables.map(escapeHtml).join(" · ")}</div>
+          <div class="dataset-meta">Try: ${sample.examples.slice(0, 2).map(escapeHtml).join(" / ")}</div>
+          <button class="btn" data-sample-id="${escapeHtml(sample.id)}" ${sample.available ? "" : "disabled"}>${sample.available ? "Open in Query Studio" : "Run sample generator first"}</button>
+        </article>
+      `).join("");
+    }
+
+    function handleSampleSelection(event) {
+      const button = event.target.closest("[data-sample-id]");
+      if (!button) return;
+      const sample = state.samples.find((item) => item.id === button.dataset.sampleId);
+      if (sample) connectSample(sample);
+    }
+
+    function renderPromptChips(sample) {
+      const examples = sample?.examples || ["Show me the first 10 rows from a relevant table"];
+      $("promptRow").innerHTML = examples.map((question) => `
+        <button class="chip" data-question="${escapeHtml(question)}">${escapeHtml(question)}</button>
+      `).join("");
+    }
+
+    async function connectSample(sample) {
+      $("dbType").value = "sqlite";
+      $("dbName").value = sample.path;
+      applyDbMode();
+      openView("studio");
+      await connect(sample.name);
+    }
+
+    async function reconnectDatabase(id) {
+      const button = document.querySelector(`[data-reconnect-id="${CSS.escape(id)}"]`);
+      if (button) button.disabled = true;
+      try {
+        const res = await fetch(`${API}/api/db/reconnect/${encodeURIComponent(id)}`, { method: "POST" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Reconnect failed");
+        $("dbType").value = data.database_type;
+        $("dbName").value = data.database_name;
+        applyDbMode();
+        connectionId = data.connection_id;
+        await activateConnection(data, data.name);
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
+    async function activateConnection(data, databaseName) {
+      connectionId = data.connection_id;
+      $("connDot").classList.add("on");
+      $("connLabel").textContent = `Connected · ${data.table_count} tables`;
+      $("activeDatabase").textContent = databaseName || $("dbName").value;
+      $("disconnectBtn").hidden = false;
+      $("questionInput").disabled = false;
+      $("askBtn").disabled = false;
+      const selectedSample = state.samples.find((sample) => sample.path === $("dbName").value);
+      renderPromptChips(selectedSample);
+      await Promise.all([loadSchema(), loadStats(), loadHistory(), loadSavedQueries()]);
+      await loadCatalog();
+    }
+
+    async function disconnectDatabase() {
+      if (!connectionId) return;
+      const currentConnectionId = connectionId;
+      $("disconnectBtn").disabled = true;
+      try {
+        const res = await fetch(`${API}/api/db/disconnect/${encodeURIComponent(currentConnectionId)}`, { method: "POST" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Could not disconnect database.");
+        connectionId = null;
+        conversationId = null;
+        state.historyRows = [];
+        state.savedQueries = [];
+        $("connDot").classList.remove("on");
+        $("connLabel").textContent = "No database connected";
+        $("activeDatabase").textContent = "Choose a sample or connect a database to begin.";
+        $("disconnectBtn").hidden = true;
+        $("questionInput").disabled = true;
+        $("askBtn").disabled = true;
+        $("schemaPanel").innerHTML = '<div style="color:var(--text-soft);font-size:.8rem">Connect a database to inspect its tables.</div>';
+        $("promptRow").innerHTML = "";
+        $("transcript").innerHTML = '<div class="empty-state">Connect a database, then ask a question. Results include safe SQL, an explanation, execution details, and a suitable visualization.</div>';
+        $("historyList").innerHTML = '<div style="color:var(--text-soft);font-size:.8rem">Connect a database to view query history.</div>';
+        $("savedList").innerHTML = '<div style="color:var(--text-soft);font-size:.8rem">Connect a database to load saved queries.</div>';
+        await Promise.all([loadStats(), loadCatalog()]);
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        $("disconnectBtn").disabled = false;
+      }
+    }
+
+    async function uploadAndConnect() {
+      const file = $("sqliteFile").files?.[0];
+      const status = $("uploadStatus");
+      const button = $("uploadConnectBtn");
+      status.classList.remove("error");
+      if (!file) {
+        status.textContent = "Choose a .db, .sqlite, or .sqlite3 file first.";
+        status.classList.add("error");
+        return;
+      }
+      if (file.size > 50 * 1024 * 1024) {
+        status.textContent = "This file is larger than the 50 MB limit.";
+        status.classList.add("error");
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Uploading…";
+      status.textContent = `Uploading ${file.name}…`;
+      try {
+        const res = await fetch(`${API}/api/db/upload?filename=${encodeURIComponent(file.name)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/octet-stream" },
+          body: file,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Upload failed.");
+        $("dbType").value = "sqlite";
+        $("dbName").value = data.database_name;
+        applyDbMode();
+        status.textContent = `Uploaded ${file.name}. Connecting…`;
+        const connected = await connect(data.name);
+        status.textContent = connected ? `${file.name} is connected.` : "Upload succeeded, but the database could not be connected.";
+        if (!connected) status.classList.add("error");
+        $("sqliteFile").value = "";
+      } catch (error) {
+        status.textContent = error.message;
+        status.classList.add("error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Upload & connect";
+      }
+    }
+
+    async function connect(connectionName = null) {
+      const dbType = $("dbType").value;
+      const databaseName = $("dbName").value.trim();
+
+      if (!databaseName) {
+        $("connLabel").textContent = "Enter a database path or name.";
+        return;
+      }
+
+      if (dbType === "postgresql" && !$("dbHost").value.trim()) {
+        $("connLabel").textContent = "PostgreSQL requires a host.";
+        return;
+      }
+
+      const body = {
+        name: connectionName || "connection-" + Date.now(),
+        database_type: dbType,
+        database_name: databaseName,
+        host: dbType === "postgresql" ? $("dbHost").value || null : null,
+        username: dbType === "postgresql" ? $("dbUser").value || null : null,
+        password: dbType === "postgresql" ? $("dbPass").value || null : null,
+      };
+
+      $("connectBtn").disabled = true;
+      $("connectBtn").textContent = "Connecting…";
+
+      try {
+        const res = await fetch(`${API}/api/db/connect`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Connection failed");
+
+        await activateConnection(data, connectionName || databaseName);
+        return true;
+      } catch (e) {
+        $("connLabel").textContent = "Error: " + e.message;
+        return false;
+      } finally {
+        $("connectBtn").disabled = false;
+        $("connectBtn").textContent = "Connect";
+      }
+    }
+
+    async function loadStats() {
+      const params = connectionId ? `?connection_id=${encodeURIComponent(connectionId)}` : "";
+      const res = await fetch(`${API}/api/dashboard${params}`);
+      const d = await res.json();
+      const cards = [
+        { label: "Queries", value: d.total_queries },
+        { label: "Success", value: `${Math.round((d.success_rate || 0) * 100)}%` },
+        { label: "Blocked", value: d.rejected_unsafe },
+        { label: "Avg time", value: `${d.avg_execution_time_seconds}s` },
+      ];
+
+      $("statsBar").innerHTML = cards.map((item) => `
+        <div class="summary-card">
+          <span>${item.label}</span>
+          <strong>${item.value}</strong>
+        </div>
+      `).join("");
+      renderAnalytics(d);
+    }
+
+    function renderAnalytics(data) {
+      const activity = data.activity || [];
+      const maxQueries = Math.max(1, ...activity.map((day) => day.queries));
+      $("activityChart").innerHTML = activity.map((day) => `
+        <div class="activity-column" title="${day.queries} queries">
+          <div class="activity-value">${day.queries}</div>
+          <div class="activity-bar" style="height:${Math.max((day.queries / maxQueries) * 64, 3)}px"></div>
+          <div class="activity-day">${escapeHtml(day.date.slice(5))}</div>
+        </div>
+      `).join("");
+
+      const breakdown = Object.entries(data.chart_breakdown || {});
+      const maxCharts = Math.max(1, ...breakdown.map(([, count]) => count));
+      $("chartBreakdown").innerHTML = breakdown.length ? breakdown.map(([label, count]) => `
+        <div class="mix-row">
+          <span class="mix-label">${escapeHtml(label)}</span>
+          <div class="mix-track"><div class="mix-fill" style="width:${(count / maxCharts) * 100}%"></div></div>
+          <span class="mix-count">${count}</span>
+        </div>
+      `).join("") : '<div style="color:var(--text-faint);font-size:.75rem">No query results yet</div>';
+    }
+
+    async function loadSchema() {
+      const res = await fetch(`${API}/api/db/schema?connection_id=${connectionId}`);
+      const data = await res.json();
+      const panel = $("schemaPanel");
+      panel.innerHTML = "";
+
+      Object.entries(data.tables).forEach(([tableName, cols]) => {
+        const item = document.createElement("div");
+        item.className = "schema-item";
+        item.innerHTML = `
+          <div class="schema-name">${escapeHtml(tableName)}</div>
+          ${cols.map((c) => `<div class="schema-col">${escapeHtml(c.column)}${c.primary_key ? ' <span class="pk">PK</span>' : ''}</div>`).join("")}
+        `;
+        panel.appendChild(item);
+      });
+    }
+
+    async function loadHistory() {
+      if (!connectionId) return;
+      const params = new URLSearchParams({
+        connection_id: connectionId,
+        limit: "200",
+        search: $("historySearch").value.trim(),
+        status: $("historyStatus").value,
+      });
+      const res = await fetch(`${API}/api/query/history?${params}`);
+      const data = await res.json();
+      const rows = data.items || [];
+      state.historyRows = rows;
+      const list = $("historyList");
+      $("historyCount").textContent = `${data.total || 0} matching queries`;
+
+      if (!rows.length) {
+        list.innerHTML = '<div style="color: var(--text-soft); font-size: 0.8rem;">No matching queries.</div>';
+        return;
+      }
+
+      list.innerHTML = rows.map((row, index) => `
+        <div class="history-item">
+          <strong>${escapeHtml(row.natural_language_query || "Query")}</strong>
+          <div>${escapeHtml(row.status)} · ${row.row_count ?? "-"} rows · ${row.execution_time == null ? "-" : `${Number(row.execution_time).toFixed(3)}s`}</div>
+          <div>${escapeHtml(new Date(row.created_at).toLocaleString())} · ${escapeHtml(row.chart_type || "no result")}</div>
+          <details><summary style="cursor:pointer; margin-top:6px;">SQL</summary><div class="query-sql">${escapeHtml(row.generated_sql || row.error_message || "No SQL recorded")}</div></details>
+          <div class="history-actions"><button class="small-action" data-history-action="ask" data-index="${index}">Ask again</button></div>
+        </div>
+      `).join("");
+    }
+
+    async function loadSavedQueries() {
+      if (!connectionId) return;
+      const res = await fetch(`${API}/api/saved-queries?connection_id=${encodeURIComponent(connectionId)}`);
+      state.savedQueries = await res.json();
+      const list = $("savedList");
+      if (!state.savedQueries.length) {
+        list.innerHTML = '<div style="color:var(--text-soft);font-size:.8rem">Save a useful question from any answer.</div>';
+        return;
+      }
+      list.innerHTML = state.savedQueries.map((item) => `
+        <div class="saved-item">
+          <button type="button" data-saved-action="run" data-id="${escapeHtml(item.saved_query_id)}" title="Load saved question">${escapeHtml(item.name)}</button>
+          <button type="button" class="small-action" data-saved-action="delete" data-id="${escapeHtml(item.saved_query_id)}" title="Delete saved query">×</button>
+        </div>
+      `).join("");
+    }
+
+    async function saveQuery(event) {
+      event.preventDefault();
+      if (!state.saveDraft || !connectionId) return;
+      const name = $("savedName").value.trim();
+      if (!name) return;
+      const res = await fetch(`${API}/api/saved-queries`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ connection_id: connectionId, name, ...state.saveDraft }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        alert(error.detail || "Could not save query.");
+        return;
+      }
+      $("saveDialog").close();
+      $("savedName").value = "";
+      await loadSavedQueries();
+    }
+
+    async function deleteSavedQuery(id) {
+      const res = await fetch(`${API}/api/saved-queries/${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (res.ok) await loadSavedQueries();
+    }
+
+    function exportHistory() {
+      const columns = ["created_at", "status", "natural_language_query", "generated_sql", "row_count", "chart_type", "execution_time"];
+      const quote = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+      const csv = [columns.map(quote).join(","), ...state.historyRows.map((row) => columns.map((key) => quote(row[key])).join(","))].join("\r\n");
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      link.download = "querymind-history.csv";
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    async function ask(savedQuestion = null) {
+      const question = typeof savedQuestion === "string"
+        ? savedQuestion.trim()
+        : $("questionInput").value.trim();
+      if (!question || !connectionId) return;
+
+      $("questionInput").value = "";
+      $("askBtn").disabled = true;
+
+      const emptyState = $("emptyState");
+      if (emptyState) emptyState.remove();
+
+      const turnEl = document.createElement("div");
+      turnEl.className = "turn";
+      turnEl.innerHTML = `<div class="q">${escapeHtml(question)}</div><div class="card">Thinking…</div>`;
+      $("transcript").appendChild(turnEl);
+      turnEl.scrollIntoView({ behavior: "smooth", block: "end" });
+
+      try {
+        const res = await fetch(`${API}/api/query`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ connection_id: connectionId, question, conversation_id: conversationId }),
+        });
+        const data = await res.json();
+        conversationId = data.conversation_id;
+
+        if (data.status === "rejected") {
+          turnEl.innerHTML = `
+            <div class="q">${escapeHtml(question)}</div>
+            <div class="card rejected">
+              <h4>Blocked by validator</h4>
+              <div class="reason">${escapeHtml(data.reason)}</div>
+              <div class="sql-block" style="margin-top: 10px; opacity: 0.8;">${escapeHtml(data.attempted_sql || "")}</div>
+            </div>
+          `;
+        } else if (!res.ok) {
+          turnEl.innerHTML = `
+            <div class="q">${escapeHtml(question)}</div>
+            <div class="card rejected">
+              <h4>Error</h4>
+              <div class="reason">${escapeHtml(data.detail || "Query failed")}</div>
+            </div>
+          `;
+        } else {
+          renderTurn(turnEl, question, data);
+        }
+      } catch (e) {
+        turnEl.innerHTML = `
+          <div class="q">${escapeHtml(question)}</div>
+          <div class="card rejected">${escapeHtml(e.message)}</div>
+        `;
+      } finally {
+        $("askBtn").disabled = false;
+        await loadStats();
+        await loadHistory();
+      }
+    }
+
+    function renderTurn(turnEl, question, data) {
+      const resultId = "result-" + Math.random().toString(36).slice(2);
+      turnEl.innerHTML = `
+        <div class="q">${escapeHtml(question)}</div>
+        <div class="card">
+          <h4>Generated SQL</h4>
+          <div class="sql-block">${escapeHtml(data.generated_sql)}</div>
+          ${data.explanation ? `<div class="explanation">${escapeHtml(data.explanation)}</div>` : ""}
+          <div class="meta-row">
+            <span>${data.row_count} rows returned</span>
+            <span>${Number(data.execution_time).toFixed(3)} sec</span>
+            <span>${escapeHtml(data.chart_type)} visualization</span>
+            <span>Query ${escapeHtml(String(data.query_id || "").slice(0, 8))}</span>
+            <span>${escapeHtml(new Date().toLocaleTimeString())}</span>
+          </div>
+          <div class="history-actions"><button class="small-action" data-save-current>Save query</button></div>
+        </div>
+        <div class="card result-wrap" id="${resultId}"></div>
+      `;
+      turnEl.querySelector("[data-save-current]").addEventListener("click", () => {
+        state.saveDraft = { question, generated_sql: data.generated_sql };
+        $("savedName").value = question.slice(0, 120);
+        $("saveDialog").showModal();
+      });
+      renderResult(document.getElementById(resultId), data);
+    }
+
+    function renderResult(container, data) {
+      const { chart_type, chart_config, columns, rows } = data;
+
+      if (chart_type === "metric") {
+        container.innerHTML = `
+          <div class="metric-value">${formatValue(chart_config.value)}</div>
+          <div class="metric-label">${escapeHtml(chart_config.label)}</div>
+        `;
+        return;
+      }
+
+      if (chart_type === "table" || rows.length === 0) {
+        container.innerHTML = renderTable(columns, rows);
+        return;
+      }
+
+      if (typeof Chart === "undefined") {
+        container.innerHTML = `<div style="color: var(--text-soft); margin-bottom: 10px; font-size: 0.8rem;">Chart library unavailable — showing tabular result.</div>${renderFallbackChart(chart_type, chart_config, rows)}${renderTable(columns, rows)}`;
+        return;
+      }
+
+      container.innerHTML = `
+        <div style="height: 260px;">
+          <canvas id="canvas-${container.id}"></canvas>
+        </div>
+        <details style="margin-top: 12px;">
+          <summary style="cursor: pointer; color: var(--text-soft); font-size: 0.8rem;">View as table</summary>
+          <div style="margin-top: 10px;">${renderTable(columns, rows)}</div>
+        </details>
+      `;
+
+      const ctx = document.getElementById(`canvas-${container.id}`);
+      const cfg = buildChartConfig(chart_type, chart_config, rows);
+      state.charts.push(new Chart(ctx, cfg));
+    }
+
+    function renderFallbackChart(type, cfg, rows) {
+      if (type === "bar") {
+        const labels = rows.map((r) => String(r[cfg.x_key] ?? ""));
+        const values = rows.map((r) => Number(r[cfg.y_key] ?? 0));
+        const max = Math.max(...values, 1);
+        return `
+          <div class="mini-bars">
+            ${values.map((v, i) => `<div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:6px;">
+              <span style="font-size:10px; color: var(--text-faint);">${escapeHtml(labels[i])}</span>
+              <div class="mini-bar" style="height:${Math.max((v / max) * 100, 12)}%; width: 100%;"></div>
+            </div>`).join("")}
+          </div>
+        `;
+      }
+
+      if (type === "line" || type === "pie") {
+        return `<div style="color: var(--text-soft); font-size: 0.8rem;">Chart preview unavailable. Table view is shown below.</div>`;
+      }
+
+      return "";
+    }
+
+    function buildChartConfig(type, cfg, rows) {
+      const palette = ["#e0a458", "#52b4a6", "#8b93a7", "#e66b5b", "#7a8fd6", "#c98d3f", "#5ec98a", "#b57edc"];
+
+      if (type === "pie") {
+        const labels = rows.map((r) => r[cfg.label_key]);
+        const values = rows.map((r) => r[cfg.value_key]);
+        return {
+          type: "pie",
+          data: { labels, datasets: [{ data: values, backgroundColor: palette }] },
+          options: baseOptions(),
+        };
+      }
+
+      if (type === "line") {
+        const labels = rows.map((r) => r[cfg.x_key]);
+        const values = rows.map((r) => r[cfg.y_key]);
+        return {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              label: cfg.y_key,
+              data: values,
+              borderColor: palette[0],
+              backgroundColor: "rgba(224,164,88,0.18)",
+              fill: true,
+              tension: 0.35,
+            }],
+          },
+          options: baseOptions(),
+        };
+      }
+
+      const labels = rows.map((r) => r[cfg.x_key]);
+      const yKeys = cfg.y_keys || [cfg.y_key];
+      const datasets = yKeys.map((key, i) => ({
+        label: key,
+        data: rows.map((r) => r[key]),
+        backgroundColor: palette[i % palette.length],
+      }));
+
+      return {
+        type: "bar",
+        data: { labels, datasets },
+        options: baseOptions(),
+      };
+    }
+
+    function baseOptions() {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: "#ebf2ff" },
+          },
+        },
+        scales: {
+          x: { ticks: { color: "#aab8d1" }, grid: { display: false } },
+          y: { ticks: { color: "#aab8d1" }, grid: { color: "rgba(148, 163, 184, 0.12)" } },
+        },
+      };
+    }
+
+    function renderTable(columns, rows) {
+      if (!rows.length) {
+        return '<div style="color: var(--text-soft); font-size: 0.8rem;">No rows returned.</div>';
+      }
+
+      const head = columns.map((c) => `<th>${escapeHtml(c)}</th>`).join("");
+      const body = rows.map((r) => `<tr>${columns.map((c) => `<td>${formatValue(r[c])}</td>`).join("")}</tr>`).join("");
+      return `<div class="table-wrap"><table class="result-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+    }
+
+    function formatValue(v) {
+      if (v === null || v === undefined) return "";
+      if (typeof v === "number") return v.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      return escapeHtml(String(v));
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str ?? "";
+      return div.innerHTML;
+    }
+
+    loadCatalog();
+  </script>
+</body>
+</html>
